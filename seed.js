@@ -2,12 +2,12 @@ import { getCollections, getDb } from "./lib/db.js";
 
 // Fills your database with 8 sample studios so the site looks alive.
 //
-//   npm run seed                                   -> studios owned by host@studiospace.app
+//   npm run seed                                   -> studios owned by host@studiospace.com
 //   node seed.js you@example.com "Your Name"       -> studios owned by YOU, so they
 //                                                    show up in My Studio Listings
 // Run it again any time: it replaces the old sample studios, not your own ones.
 
-const ownerEmail = process.argv[2] || process.env.SEED_OWNER_EMAIL || "host@studiospace.app";
+const ownerEmail = process.argv[2] || process.env.SEED_OWNER_EMAIL || "host@studiospace.com";
 const ownerName = process.argv[3] || process.env.SEED_OWNER_NAME || "StudioSpace Host";
 
 const studios = [

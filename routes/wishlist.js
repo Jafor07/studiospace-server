@@ -22,7 +22,7 @@ router.get("/wishlist/studios", verifyToken, async (req, res) => {
 
   const found = await studios
     .find({ _id: { $in: rows.map((row) => row.studioId) } })
-    .project({ reviews: 0 })
+    .project({ reviews: 0, _bookingLockVersion: 0 })
     .toArray();
 
   // Keep "most recently saved first"

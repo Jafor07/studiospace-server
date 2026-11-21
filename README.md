@@ -2,8 +2,8 @@
 
 Express and MongoDB API for **StudioSpace**, a peer-to-peer creative studio booking platform.
 
-**Client repository:** https://github.com/YOUR_USERNAME/studiospace-client
-**Live API:** https://YOUR-SERVER-NAME.vercel.app
+**Client repository:** https://github.com/Jafor07/studiospace-client
+**Live API:** Not deployed yet — deploy the server and replace this line with its live URL before submission.
 
 ## How security works
 
@@ -32,7 +32,7 @@ Every private route uses the `verifyToken` middleware. It reads the `Authorizati
 
 ## Double-booking prevention
 
-Two time ranges overlap when each starts before the other ends: `startMin < newEnd && endMin > newStart`. The server runs this check against `Confirmed` bookings of the same studio and date when a booking is created and again when a host confirms it. A clash returns `409` with a message such as *"This studio is already booked from 10:00 to 12:00 on 2026-11-24."* Back-to-back sessions (one ends when the next starts) are allowed.
+Two time ranges overlap when each starts before the other ends: `startMin < newEnd && endMin > newStart`. The server runs this check against `Confirmed` bookings of the same studio and date when a booking is created and again when a host confirms it. Confirmation runs in a MongoDB transaction and writes a shared studio lock version so simultaneous confirmations for the same studio serialize; a clash returns `409`. Back-to-back sessions (one ends when the next starts) are allowed. Transactions require a MongoDB replica set or sharded cluster (MongoDB Atlas supports this).
 
 ## Run it locally
 
@@ -46,10 +46,10 @@ npm run seed -- host@studiospace.com "Studio Host"   # optional sample studios
 | Variable | Meaning |
 |---|---|
 | `MONGODB_URI` | MongoDB Atlas connection string (same database as the client) |
-| `DB_NAME` | Database name, default `studiospace` |
+| `DB_NAME` | Optional database override. Defaults to the database path in `MONGODB_URI`, then `studiospace` |
 | `CLIENT_URL` | URL of the Next.js client (the JWT public keys are loaded from it) |
 | `PORT` | Optional, default `8000` |
 
 ## Deploy to Vercel
 
-The included `vercel.json` and the `export default app` in `index.js` are all Vercel needs. Add the environment variables above in the Vercel project settings.
+The included `vercel.json` and the `export default app` in `index.js` are all Vercel needs. Add the environment variables above in the Vercel project settings, and set `CLIENT_URL` to the deployed client origin. Add the resulting API URL to the client’s `NEXT_PUBLIC_SERVER_URL`.

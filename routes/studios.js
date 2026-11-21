@@ -83,8 +83,9 @@ function validateStudio(body) {
 
 // Never send reviewers' email addresses to the browser
 function toPublicStudio(studio) {
+  const { _bookingLockVersion, ...publicStudio } = studio;
   return {
-    ...studio,
+    ...publicStudio,
     reviews: (studio.reviews || []).map(({ userEmail, ...review }) => review),
   };
 }
@@ -124,7 +125,7 @@ router.get("/studios", async (req, res) => {
   const result = await studios
     .find(filter)
     .sort(sorts[sort] || sorts.newest)
-    .project({ reviews: 0 })
+    .project({ reviews: 0, _bookingLockVersion: 0 })
     .toArray();
 
   res.json(result);
@@ -137,7 +138,7 @@ router.get("/studios/featured", async (req, res) => {
     .find()
     .sort({ rating: -1, createdAt: -1 })
     .limit(6)
-    .project({ reviews: 0 })
+    .project({ reviews: 0, _bookingLockVersion: 0 })
     .toArray();
   res.json(result);
 });
@@ -162,7 +163,7 @@ router.get("/my-studios", verifyToken, async (req, res) => {
   const result = await studios
     .find({ ownerEmail: req.user.email })
     .sort({ createdAt: -1 })
-    .project({ reviews: 0 })
+    .project({ reviews: 0, _bookingLockVersion: 0 })
     .toArray();
   res.json(result);
 });

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getCollections } from "../lib/db.js";
+import { getCollections, withMongoTransaction } from "../lib/db.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import { minutesToTime, timeToMinutes, toObjectId } from "../lib/helpers.js";
 
@@ -11,7 +11,11 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 // CHALLENGE 2: look for a CONFIRMED booking that overlaps the requested time.
 // Two time ranges overlap when each one starts before the other one ends.
 // (A booking that ends at 14:00 does not clash with one that starts at 14:00.)
-function findClash(bookings, { studioId, date, startMin, endMin, excludeId }) {
+function findClash(
+  bookings,
+  { studioId, date, startMin, endMin, excludeId },
+  session,
+) {
   const filter = {
     studioId,
     date,
@@ -20,7 +24,7 @@ function findClash(bookings, { studioId, date, startMin, endMin, excludeId }) {
     endMin: { $gt: startMin },
   };
   if (excludeId) filter._id = { $ne: excludeId };
-  return bookings.findOne(filter);
+  return bookings.findOne(filter, session ? { session } : undefined);
 }
 
 const clashMessage = (clash) =>
@@ -175,43 +179,79 @@ router.patch("/bookings/:id/status", verifyToken, async (req, res) => {
   if (!["Confirmed", "Cancelled", "Completed"].includes(nextStatus))
     return res.status(400).json({ message: "Invalid status." });
 
-  const { bookings } = await getCollections();
-  const booking = await bookings.findOne({ _id });
-  if (!booking) return res.status(404).json({ message: "Booking not found." });
+  const result = await withMongoTransaction(async (session) => {
+    const { bookings, studios } = await getCollections();
+    const booking = await bookings.findOne({ _id }, { session });
+    if (!booking) return { status: 404, message: "Booking not found." };
 
-  if (booking.hostEmail !== req.user.email)
-    return res
-      .status(403)
-      .json({ message: "Only the studio host can change this booking." });
+    if (booking.hostEmail !== req.user.email) {
+      return {
+        status: 403,
+        message: "Only the studio host can change this booking.",
+      };
+    }
 
-  const allowed = {
-    Confirmed: ["Pending"],
-    Completed: ["Confirmed"],
-    Cancelled: ["Pending", "Confirmed"],
-  };
-  if (!allowed[nextStatus].includes(booking.status))
-    return res.status(400).json({
-      message: `A ${booking.status.toLowerCase()} booking can't be changed to ${nextStatus.toLowerCase()}.`,
-    });
+    const allowed = {
+      Confirmed: ["Pending"],
+      Completed: ["Confirmed"],
+      Cancelled: ["Pending", "Confirmed"],
+    };
+    if (!allowed[nextStatus].includes(booking.status)) {
+      return {
+        status: 400,
+        message: `A ${booking.status.toLowerCase()} booking can't be changed to ${nextStatus.toLowerCase()}.`,
+      };
+    }
 
-  // Confirming takes the slot, so check again that nobody else got it first
-  if (nextStatus === "Confirmed") {
-    const clash = await findClash(bookings, {
-      studioId: booking.studioId,
-      date: booking.date,
-      startMin: booking.startMin,
-      endMin: booking.endMin,
-      excludeId: _id,
-    });
-    if (clash) return res.status(409).json({ message: clashMessage(clash) });
-  }
+    if (nextStatus === "Confirmed") {
+      // This shared write serializes confirmations for the same studio. MongoDB
+      // retries a transaction that loses a write conflict with another confirmer.
+      const lock = await studios.updateOne(
+        { _id: booking.studioId },
+        { $inc: { _bookingLockVersion: 1 } },
+        { session },
+      );
+      if (!lock.matchedCount) {
+        return { status: 404, message: "The studio for this booking no longer exists." };
+      }
 
-  const changes = { status: nextStatus };
-  if (nextStatus === "Cancelled")
-    changes.cancelReason = "Declined by the host.";
+      const clash = await findClash(
+        bookings,
+        {
+          studioId: booking.studioId,
+          date: booking.date,
+          startMin: booking.startMin,
+          endMin: booking.endMin,
+          excludeId: _id,
+        },
+        session,
+      );
+      if (clash) return { status: 409, message: clashMessage(clash) };
+    }
 
-  await bookings.updateOne({ _id }, { $set: changes });
-  res.json({ message: `Booking marked as ${nextStatus.toLowerCase()}.` });
+    const changes = { status: nextStatus };
+    if (nextStatus === "Cancelled")
+      changes.cancelReason = "Declined by the host.";
+
+    const update = await bookings.updateOne(
+      { _id, status: booking.status },
+      { $set: changes },
+      { session },
+    );
+    if (!update.modifiedCount) {
+      return {
+        status: 409,
+        message: "This booking changed while you were updating it. Please refresh and try again.",
+      };
+    }
+
+    return {
+      status: 200,
+      message: `Booking marked as ${nextStatus.toLowerCase()}.`,
+    };
+  });
+
+  res.status(result.status).json({ message: result.message });
 });
 
 export default router;
