@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import studiosRouter from "./routes/studios.js";
 import wishlistRouter from "./routes/wishlist.js";
+import bookingsRouter from "./routes/bookings.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -16,6 +17,7 @@ app.get("/", (req, res) => {
 
 app.use(studiosRouter);
 app.use(wishlistRouter);
+app.use(bookingsRouter);
 
 // Unknown route
 app.use((req, res) => {
