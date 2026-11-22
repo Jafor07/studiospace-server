@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import { getDb } from "./lib/db.js";
 import studiosRouter from "./routes/studios.js";
 import wishlistRouter from "./routes/wishlist.js";
 import bookingsRouter from "./routes/bookings.js";
@@ -13,6 +14,35 @@ app.use(express.json({ limit: "1mb" }));
 
 app.get("/", (req, res) => {
   res.json({ message: "StudioSpace server is running fine!" });
+});
+
+// Open /health in a browser to see which database this server really uses
+app.get("/health", async (req, res) => {
+  let clusterHost = "unknown";
+  try {
+    clusterHost = new URL(process.env.MONGODB_URI).hostname;
+  } catch {
+    // the link could not be read
+  }
+
+  try {
+    const db = await getDb();
+    const studios = await db.collection("studios").countDocuments();
+    res.json({
+      ok: true,
+      database: db.databaseName,
+      clusterHost,
+      studios,
+      clientUrl: process.env.CLIENT_URL || null,
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      clusterHost,
+      clientUrl: process.env.CLIENT_URL || null,
+      error: error.message,
+    });
+  }
 });
 
 app.use(studiosRouter);
