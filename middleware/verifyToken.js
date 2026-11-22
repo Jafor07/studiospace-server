@@ -9,9 +9,9 @@ function getJwks() {
     throw new Error("CLIENT_URL is missing. Add it to your .env file.");
   }
   if (!jwks) {
-    jwks = createRemoteJWKSet(
-      new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
-    );
+    // Remove spaces and any "/" at the end, so a typo can't break the address
+    const clientUrl = process.env.CLIENT_URL.trim().replace(/\/+$/, "");
+    jwks = createRemoteJWKSet(new URL(`${clientUrl}/api/auth/jwks`));
   }
   return jwks;
 }

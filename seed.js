@@ -10,6 +10,13 @@ import { getCollections, getDb } from "./lib/db.js";
 const ownerEmail = process.argv[2] || process.env.SEED_OWNER_EMAIL || "host@studiospace.com";
 const ownerName = process.argv[3] || process.env.SEED_OWNER_NAME || "StudioSpace Host";
 
+// Free photos from Pexels (free to use, no attribution required).
+// If one ever stops loading, the site shows its built-in illustration instead.
+const photo = (id, width = 1400) =>
+  `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=${width}`;
+
+const hostAvatar = "/avatars/studio-host.svg";
+
 const studios = [
   {
     title: "Lumen Cyc Wall Studio",
@@ -18,8 +25,8 @@ const studios = [
     securityDeposit: 120,
     maxCapacity: 12,
     location: "House 24, Road 11, Banani, Dhaka 1213",
-    image: "/studios/photo-a.svg",
-    gallery: ["/studios/photo-b.svg", "/studios/photo-c.svg"],
+    image: photo(134469),
+    gallery: [photo(7383646), photo(2388569)],
     amenities: ["Wi-Fi", "Air conditioning", "Backdrops and paper", "Softboxes and strobes", "Makeup station", "Power backup", "Parking"],
     overview:
       "A 900 square foot white cyclorama wall with a seamless floor curve, built for fashion, product and portrait work. Two softboxes, a beauty dish and a full set of paper backdrops are included in the hourly rate. The makeup station has mirrors and good lighting, and the street entrance makes loading gear easy.",
@@ -36,8 +43,8 @@ const studios = [
     securityDeposit: 80,
     maxCapacity: 8,
     location: "Level 5, 17 Mirpur Road, Dhanmondi, Dhaka 1205",
-    image: "/studios/photo-b.svg",
-    gallery: ["/studios/photo-c.svg", "/studios/photo-a.svg"],
+    image: photo(4268512),
+    gallery: [photo(4123848), photo(7383644)],
     amenities: ["Wi-Fi", "Air conditioning", "Props and furniture", "Changing room", "Restroom", "Kitchenette"],
     overview:
       "A bright top-floor loft with tall north-facing windows and soft, even daylight from morning until late afternoon. Exposed brick, vintage furniture and a small prop library make it a favourite for lifestyle shoots, family portraits and editorial work.",
@@ -53,8 +60,8 @@ const studios = [
     securityDeposit: 400,
     maxCapacity: 40,
     location: "Plot 8, Tejgaon Industrial Area, Dhaka 1208",
-    image: "/studios/film-a.svg",
-    gallery: ["/studios/film-b.svg", "/studios/film-c.svg"],
+    image: photo(2608519),
+    gallery: [photo(3935026), photo(6621416)],
     amenities: ["Power backup", "Air conditioning", "Blackout curtains", "Soundproofing", "Green room", "Parking", "Restroom", "Wi-Fi"],
     overview:
       "A 2,400 square foot soundproofed stage with a lighting grid, three-phase power and a drive-in loading door. The attached green room fits ten people, and the blackout walls let you shoot day for night without worrying about outside noise. A good fit for commercials, short films and music videos.",
@@ -71,8 +78,8 @@ const studios = [
     securityDeposit: 300,
     maxCapacity: 30,
     location: "Agrabad Commercial Area, Chattogram 4100",
-    image: "/studios/film-b.svg",
-    gallery: ["/studios/film-c.svg", "/studios/film-a.svg"],
+    image: photo(7513459),
+    gallery: [photo(3935027), photo(6621403)],
     amenities: ["Power backup", "Air conditioning", "Blackout curtains", "Green room", "Parking", "Wi-Fi"],
     overview:
       "Chattogram’s newest stage, with a painted white floor, a motorised curtain track and a flexible lighting rail. It suits narrative shorts, interviews and live-streamed events, and the host can arrange extra lighting gear on request.",
@@ -88,8 +95,8 @@ const studios = [
     securityDeposit: 60,
     maxCapacity: 5,
     location: "Road 103, Gulshan 2, Dhaka 1212",
-    image: "/studios/podcast-a.svg",
-    gallery: ["/studios/podcast-b.svg", "/studios/podcast-c.svg"],
+    image: photo(270288),
+    gallery: [photo(3710191), photo(7450049)],
     amenities: ["Microphones included", "Soundproofing", "Air conditioning", "Wi-Fi", "Props and furniture"],
     overview:
       "A treated lounge for up to four guests, with four broadcast dynamic microphones, boom arms and a headphone amp for every seat. The room has acoustic panels on every wall and a comfortable sofa for long conversations. Bring a laptop or use the studio’s recording interface.",
@@ -106,8 +113,8 @@ const studios = [
     securityDeposit: 40,
     maxCapacity: 4,
     location: "Zindabazar, Sylhet 3100",
-    image: "/studios/podcast-b.svg",
-    gallery: ["/studios/podcast-c.svg", "/studios/podcast-a.svg"],
+    image: photo(164755),
+    gallery: [photo(2097428), photo(2918997)],
     amenities: ["Microphones included", "Soundproofing", "Wi-Fi", "Air conditioning"],
     overview:
       "A small, quiet room in the middle of Sylhet, ideal for solo shows, interviews and voice-over work. It comes with two microphones, a pop filter and a simple recording setup, so you can arrive with nothing but your ideas.",
@@ -123,8 +130,8 @@ const studios = [
     securityDeposit: 150,
     maxCapacity: 10,
     location: "Sector 7, Uttara, Dhaka 1230",
-    image: "/studios/music-a.svg",
-    gallery: ["/studios/music-b.svg", "/studios/music-c.svg"],
+    image: photo(5650547),
+    gallery: [photo(7087606), photo(5657665)],
     amenities: ["Mixing console", "Microphones included", "Soundproofing", "Air conditioning", "Wi-Fi", "Power backup", "Green room"],
     overview:
       "A control room and a separate live room, connected by a glass window. The suite has a 16-channel mixing console, studio monitors, a vocal booth and a selection of condenser and dynamic microphones. An in-house engineer is available for an extra fee.",
@@ -141,8 +148,8 @@ const studios = [
     securityDeposit: 50,
     maxCapacity: 16,
     location: "Mirpur DOHS, Dhaka 1216",
-    image: "/studios/workshop-a.svg",
-    gallery: ["/studios/workshop-b.svg", "/studios/workshop-c.svg"],
+    image: photo(2900935),
+    gallery: [photo(8191551), photo(3777935)],
     amenities: ["Wi-Fi", "Air conditioning", "Props and furniture", "Kitchenette", "Restroom", "Parking"],
     overview:
       "A bright, easy-to-clean room with long work tables, twelve easels, a pottery wheel and a kiln the host can fire for you. It is popular for painting classes, ceramics evenings and small exhibitions, and the wall space is ready to hang finished pieces.",
@@ -182,7 +189,7 @@ async function seed() {
       ...studio,
       ownerEmail,
       ownerName,
-      ownerImage: "",
+      ownerImage: hostAvatar,
       rating: Math.round(average * 10) / 10,
       reviewCount: builtReviews.length,
       reviews: builtReviews,

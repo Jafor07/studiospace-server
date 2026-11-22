@@ -9,39 +9,28 @@ import bookingsRouter from "./routes/bookings.js";
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-app.use(cors({ origin: process.env.CLIENT_URL || true }));
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL
+      ? process.env.CLIENT_URL.trim().replace(/\/+$/, "")
+      : true,
+  }),
+);
 app.use(express.json({ limit: "1mb" }));
 
 app.get("/", (req, res) => {
   res.json({ message: "StudioSpace server is running fine!" });
 });
 
-// Open /health in a browser to see which database this server really uses
+// A simple "is the server and database alive?" check. It shares no details.
 app.get("/health", async (req, res) => {
-  let clusterHost = "unknown";
-  try {
-    clusterHost = new URL(process.env.MONGODB_URI).hostname;
-  } catch {
-    // the link could not be read
-  }
-
   try {
     const db = await getDb();
-    const studios = await db.collection("studios").countDocuments();
-    res.json({
-      ok: true,
-      database: db.databaseName,
-      clusterHost,
-      studios,
-      clientUrl: process.env.CLIENT_URL || null,
-    });
+    await db.command({ ping: 1 });
+    res.json({ ok: true });
   } catch (error) {
-    res.status(500).json({
-      ok: false,
-      clusterHost,
-      clientUrl: process.env.CLIENT_URL || null,
-      error: error.message,
-    });
+    console.error("Health check failed:", error.message);
+    res.status(503).json({ ok: false });
   }
 });
 

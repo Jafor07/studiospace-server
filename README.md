@@ -3,7 +3,7 @@
 Express and MongoDB API for **StudioSpace**, a peer-to-peer creative studio booking platform.
 
 **Client repository:** https://github.com/Jafor07/studiospace-client
-**Live API:** Not deployed yet — deploy the server and replace this line with its live URL before submission.
+**Live API:** https://studiospace-server-rouge.vercel.app
 
 ## How security works
 
@@ -13,6 +13,7 @@ Every private route uses the `verifyToken` middleware. It reads the `Authorizati
 
 | Method | Route | Access | What it does |
 |---|---|---|---|
+| GET | `/health` | public | Returns `{ "ok": true }` when the server and database are alive |
 | GET | `/studios` | public | List studios (`search`, `category`, `sort`, `minPrice`, `maxPrice`) |
 | GET | `/studios/featured` | public | Six top-rated studios (`limit(6)`) |
 | GET | `/studios/:id` | public | One studio with its reviews |
